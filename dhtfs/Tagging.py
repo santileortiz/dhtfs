@@ -647,7 +647,7 @@ class Tagging:
 		T.tagExists() -> Checks whether a given tag exists in this Tagging instance
 
 		@param tag: Tag to be checked
-		@type element: str
+		@type tag: str
 
 		@return: True if Tag exists, False otherwise
 		@rtype: C{bool}

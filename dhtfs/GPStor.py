@@ -211,8 +211,8 @@ class GPStor:
 		Store a python object to the database.
 		This will overwrite any previous contents of the database
 
-		@param tagDict:	Python object to be stored to Database
-		@type tagDict: object
+		@param data:	Python object to be stored to Database
+		@type data: object
 
 		@return: 
 			1. L{GPS_ERR_SUCCESS} on success.
