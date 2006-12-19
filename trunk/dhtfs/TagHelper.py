@@ -150,11 +150,11 @@ class TagDir(Tagging):
 		"""
 		Delete files from directories
 
-		@param fileList: List of files to be used
-		@type fileList: List of instances of L{TagFile}
+		@param files: List of files to be used
+		@type files: List of instances of L{TagFile}
 
-		@param dirList: List of directories
-		@type dirList: List of str
+		@param dirs: List of directories
+		@type dirs: List of str
 		"""
 
 		print 'Deleting dirs %s from files %s' %(dirs, files)
@@ -199,7 +199,7 @@ class TagDir(Tagging):
 		Get directories which contain the files contained in the given directories
 
 		@param dirList: List of directories to be used
-		@type files: List of str
+		@type dirList: List of str
 
 		@return: List of all directories
 		@rtype: List of str
@@ -212,7 +212,7 @@ class TagDir(Tagging):
 		Get files contained in all the directories specified in dirList. Also get list of other directories which contain ANY of these files
 
 		@param dirList: List of directories to be used
-		@type files: List of str
+		@type dirList: List of str
 
 		@param beRestrictive: Only return those directories which are NOT associated with ALL the files
 			with which the given list of directories is associated.
