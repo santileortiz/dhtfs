@@ -158,7 +158,6 @@ def main():
 	# Get file instances for the selected files
 	fiList = [a for a in td.getAllFiles() if a.name in fileNames]
 
-	print "deleting tags %s from files %s" % (tagList, fiList)
 	td.delFilesFromDirs(fiList, tagList)
 
 if __name__ == "__main__":

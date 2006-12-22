@@ -41,13 +41,10 @@ class TagFile:
 	"""
 	def __init__(self, location, name):
 
-		self.location = os.path.abspath(os.path.normpath(location))
+		self.location = os.path.normpath(location)
 		self.name = name
 		self.__hash = 0
-		if os.path.isfile(location):
-			self.__hash = (self.location + self.name).__hash__() # Avoid recomputing
-		else:
-			self.location = None
+		self.__hash = (self.location + self.name).__hash__() # Avoid recomputing
 
 	def __hash__(self):
 		return self.__hash
@@ -83,25 +80,19 @@ class TagDir(Tagging):
 		return 'Directory helper for ' + Tagging.__str__(self)
 
 	def __createActualDirs(self, dirs, mode):
-		print "in __createActualDirs dirs = ", dirs
 		allDirs = self.getAllDirs()
 		dirs = [x for x in dirs if x not in allDirs]
-		print "After filter dirs = ", dirs
 		for dir in dirs:
 			dirname = os.path.join(self.db_path, 't_' + dir)
 			if not os.path.isdir(dirname):
-				print "creating dir ", dirname
 				os.mkdir(dirname, mode)
 
 	def __delActualDirs(self, dirs):
-		print "in __delActualDirs dirs = ", dirs
 		allDirs = self.getAllDirs()
 		dirs = [x for x in dirs if x in allDirs]
-		print "After filter dirs = ", dirs
 		for dir in dirs:
 			dirname = os.path.join(self.db_path, 't_' + dir)
 			if os.path.isdir(dirname):
-				print "Removing dir ", dirname
 				os.rmdir(dirname)
 
 	def addDirsToFiles(self, fileList, dirList, mode=DEFAULT_DIR_MODE):
@@ -118,7 +109,6 @@ class TagDir(Tagging):
 		@type mode: int
 		"""
 		self.__createActualDirs(dirList, mode)
-		print 'Adding tags %s to files %s' % (dirList, fileList)
 		Tagging.addTags(self, fileList, dirList)
 
 	def createDirs(self, dirs, mode=DEFAULT_DIR_MODE):
@@ -132,7 +122,6 @@ class TagDir(Tagging):
 		@type mode: int
 		"""
 		self.__createActualDirs(dirs, mode)
-		print 'Adding tags %s to files %s' % (dirs, None)
 		Tagging.addTags(self, newTagList=dirs)
 
 	def delDirs(self, dirs):
@@ -142,7 +131,6 @@ class TagDir(Tagging):
 		@param dirs: directories to be created
 		@type dirs: List of str
 		"""
-		print 'Deleting tags ', dirs
 		self.__delActualDirs(dirs)
 		Tagging.delTagsFromElements(self, dirs)
 
@@ -157,7 +145,6 @@ class TagDir(Tagging):
 		@type dirs: List of str
 		"""
 
-		print 'Deleting dirs %s from files %s' %(dirs, files)
 		self.__delActualDirs(dirs)
 		Tagging.delTagsFromElements(self, dirs, files)
 
