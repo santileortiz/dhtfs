@@ -28,7 +28,7 @@
 from distutils.core import setup
 
 setup(	name = 'dhtfs',
-	version = '0.1.0',
+	version = '0.2.0',
 	packages = ['dhtfs'],
 	scripts = ['scripts/addTags', 'scripts/mkfs.dhtfs', 'scripts/mount.dhtfs', 'scripts/delTags'],
 	author = 'Mayuresh Phadke',
