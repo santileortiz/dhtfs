@@ -54,8 +54,6 @@ class Dhtfs(Fuse):
 	DB_FILE = '.dhtfs.db'
 	SEQ_FILE = '.dhtfs.seq'
 
-	mountDBLocations = {}
-
 	def checkSetup(cls, path):
 		"""
 		D.checkSetup() -> Check whether dhtfs filesystem is setup at path
@@ -161,22 +159,17 @@ class Dhtfs(Fuse):
 			actualPath = self.root
 
 		elif self.tagdir.isDir(os.path.basename(path)):
-		#	dirs = [x for x in os.path.dirname(path).split(os.path.sep) if x != '']
-		#	if os.path.basename(path) in self.tagdir.getDirsForDirs(dirs):
-
 			self.logger.info("Path is directory")
 			actualPath = os.path.join(self.root, 't_' + os.path.basename(path))
-
-		#	else:
-		#		actualPath = None
 		else:
 			self.logger.info("get actual path from TagHelper")
 			dirs = [x for x in os.path.dirname(path).split(os.path.sep) if x != '']
 			filename = os.path.basename(path)
-			actualPath = self.tagdir.getActualLocation(dirs, filename)
-
-		if not actualPath:
-			actualPath = os.path.join(self.root, Dhtfs.MISSING_FILE)
+			actualLocation = self.tagdir.getActualLocation(dirs, filename)
+			if actualLocation:
+				actualPath = os.path.join(self.root, actualLocation)
+			else:
+				actualPath = os.path.join(self.root, Dhtfs.MISSING_FILE)
 
 		self.logger.info("Path =  %s, ActualPath =  %s" % (path, actualPath))
 
@@ -227,7 +220,7 @@ class Dhtfs(Fuse):
 				
 		# Cache the mapping between 'location in our file system' -> 'location in the underlying file system'
 		self.fileCache.clear()
-		self.fileCache.update([(os.path.join(path, f.name), f.location) for f in files])
+		self.fileCache.update([(os.path.join(path, f.name), os.path.join(self.root, f.location)) for f in files])
 		self.fileCache.update([(os.path.join(path, dir), os.path.join(self.root, 't_' + dir)) for dir in dirs])
 		self.logger.info("Added info for dir %s to cache" % path)
 
@@ -320,7 +313,7 @@ class Dhtfs(Fuse):
 		number = self.__getNextSeqNumber()
 		newfilename = 'f_' + ('%x' % number).rjust(32, '0')
 		self.logger.info("newfilename = %s" % newfilename)
-		actualPath = os.path.join(self.root, newfilename)
+		actualPath = newfilename
 
 		return actualPath
 
@@ -359,7 +352,7 @@ class Dhtfs(Fuse):
 					actualPath = server.generateNewFileName()
 					newCreated = True
 
-				self.file = os.fdopen(os.open(actualPath, flags, *mode),
+				self.file = os.fdopen(os.open(os.path.join(server.root, actualPath), flags, *mode),
 										flag2mode(flags))
 				self.fd = self.file.fileno()
 
@@ -441,8 +434,6 @@ Generates Dynamic Hierarchy for Files from tags associated with files. Generated
 		except OSError:
 			print >> sys.stderr, "can't stat root of underlying filesystem"
 			sys.exit(1)
-
-		print server.fuse_args.mountpoint
 
 	server.main()
 

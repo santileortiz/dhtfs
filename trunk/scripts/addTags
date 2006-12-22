@@ -161,7 +161,6 @@ def main():
 	# Get file instances for the selected files
 	fiList = [a for a in td.getAllFiles() if a.name in fileNames]
 
-	print "Adding tags %s to files %s" % (tagList, fiList)
 	td.createDirs(tagList)
 	td.addDirsToFiles(fiList, tagList)
 
