@@ -121,8 +121,8 @@ class Dhtfs(Fuse):
 		except:
 			self.getCover = "Dont Care"
 
-		self.tagdir = TagDir(db_path=self.root, db_file=self.DB_FILE)
 		self.logger = TagHelper.getLogger('DHTFS')
+		self.tagdir = TagDir(db_path=self.root, db_file=self.DB_FILE, logger=self.logger)
 		self.__initSequenceNumberGenerator()
 
 		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
@@ -151,16 +151,25 @@ class Dhtfs(Fuse):
 		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
 
 		if path in self.fileCache:
-			self.logger.info("Path found in cache")
-			actualPath = self.fileCache[path]
+			self.logger.info("CACHE: Path %s found in cache" % path)
+			self.logger.info("CACHE: ActualPath = %s" % self.fileCache[path])
+			return self.fileCache[path]
 
-		elif path == '/':
+		if path == '/':
 			self.logger.info("Path is root directory")
 			actualPath = self.root
 
 		elif self.tagdir.isDir(os.path.basename(path)):
-			self.logger.info("Path is directory")
-			actualPath = os.path.join(self.root, 't_' + os.path.basename(path))
+			dirpath = os.path.dirname(path)
+			dirname = os.path.basename(path)
+			fileInstances, dirs = self.getDirectoryEntries(dirpath)
+			self.logger.info("dirname = %s, dirs = %s" % (dirname, dirs))
+			if dirname in dirs:
+				self.logger.info("Path is directory")
+				actualPath = os.path.join(self.root, 't_' + os.path.basename(path))
+			else:
+				self.logger.info("Directory not found here")
+				actualPath = os.path.join(self.root, Dhtfs.MISSING_FILE)
 		else:
 			self.logger.info("get actual path from TagHelper")
 			dirs = [x for x in os.path.dirname(path).split(os.path.sep) if x != '']
@@ -172,26 +181,47 @@ class Dhtfs(Fuse):
 				actualPath = os.path.join(self.root, Dhtfs.MISSING_FILE)
 
 		self.logger.info("Path =  %s, ActualPath =  %s" % (path, actualPath))
+		
+		# Add path to cache
+		self.logger.info("CACHE: Adding path %s to cache" % path)
+		self.fileCache[path] = actualPath
 
 		return actualPath
 
 	def opendir(self, path):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		self.logger.info("path = %s" % path)
 
 	def releasedir(self, path):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		self.logger.info("path = %s" % path)
 
 	def getattr(self, path):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		self.logger.info("path = %s" % path)
 		return os.lstat(self.getActualPath(path))
 
 	def readdir(self, path, offset):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
-		self.logger.info("self.getCover = %s" % self.getCover)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("path = %s" % path)
 
+		fileInstances, dirs = self.getDirectoryEntries(path)
+
+		# Cache the mapping between 'location in our file system' -> 'location in the underlying file system'
+		self.logger.info("CACHE: Clearing cache")
+		self.fileCache.clear()
+		self.fileCache.update([(os.path.join(path, f.name), os.path.join(self.root, f.location)) for f in fileInstances])
+		self.fileCache.update([(os.path.join(path, dir), os.path.join(self.root, 't_' + dir)) for dir in dirs])
+		self.logger.info("CACHE: Added info for dir %s to cache" % path)
+
+		# Get file names from the file object
+		filenames = [f.name for f in fileInstances] 
+
+		# Create a generator for the directory entries
+		for e in filenames + dirs:
+			yield fuse.Direntry(e)
+
+	def getDirectoryEntries(self, path):
 		# Get the directories in the specified path
 		# The directories in the path will be treated as tags
 		dirsInPath = [x for x in path.split(os.path.sep) if x != '']
@@ -213,63 +243,94 @@ class Dhtfs(Fuse):
 					len(dirs) + len(files) > Dhtfs.MAX_DIR_ENTRIES and
 					self.getCover != 'Never'
 				):
-			self.logger.info("Dir entries exceeded %d. getting cover" % Dhtfs.MAX_DIR_ENTRIES)	
 			dirs, files = self.tagdir.getDirsAndFilesForDirs(dirsInPath, getCover=True)
 			self.logger.info("After getDirsAndFilesForDirs getCover=True, \
 					dirs = %s, files = %s" %(dirs, files))
 				
-		# Cache the mapping between 'location in our file system' -> 'location in the underlying file system'
-		self.fileCache.clear()
-		self.fileCache.update([(os.path.join(path, f.name), os.path.join(self.root, f.location)) for f in files])
-		self.fileCache.update([(os.path.join(path, dir), os.path.join(self.root, 't_' + dir)) for dir in dirs])
-		self.logger.info("Added info for dir %s to cache" % path)
+		files = [f for f in files if f.location != Dhtfs.MISSING_FILE]
 
-		# Get file names from the file object
-		filenames = [f.name for f in files]
-		self.logger.info("Dir entries = %s" % (filenames + dirs))
-
-		# Create a generator for the directory entries
-		for e in filenames + dirs:
-			yield fuse.Direntry(e)
+		self.logger.info("Returning Dir entries = %s, %s" % (files, dirs))
+		return files, dirs
 
 	def rmdir(self, path):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		self.tagdir.delDirs([os.path.basename(path)])
 
-#	def rename(self, path, path1):
-#		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
-#		os.rename(self.root + path, self.root + path1)
+		# Clear cache
+		self.logger.info("CACHE: Clearing cache")
+		self.fileCache.clear()
+
+	def rename(self, path, path1):
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
+
+		self.logger.info("rename %s to %s" %(path, path1))
+		if self.tagdir.isDir(os.path.basename(path)): # Path is a directory
+			self.logger.info("Renaming dir %s to %s" % (path, path1))
+			dirs = [x for x in path.split(os.path.sep) if x != '']
+			dirs1 = [x for x in path1.split(os.path.sep) if x != '']
+			self.logger.info("Renaming dir %s to %s" % (dirs, dirs1))
+			self.tagdir.renameDir(dirs, dirs1)
+
+		else: # Path is a file
+			dirs = [x for x in os.path.dirname(path).split(os.path.sep) if x != '']
+
+			# create an instance of class TagFile
+			filename = os.path.basename(path)
+			location = self.tagdir.getActualLocation(dirs, filename)
+
+			fi = TagFile(location, filename)
+
+			# Remove the directories asociated with the file
+			self.tagdir.delFiles([fi], dirs)
+			self.logger.info("Deleted %s" % path)
+
+			# change name of file
+			newfilename = os.path.basename(path1)
+			fi = TagFile(location, newfilename)
+
+			# Associate directories to the file
+			dirs = [x for x in os.path.dirname(path1).split(os.path.sep) if x != '']
+			self.tagdir.addDirsToFiles([fi], dirs)
+
+		# Clear cache
+		self.logger.info("CACHE: Clearing cache")
+		self.fileCache.clear()
 
 	def chmod(self, path, mode):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		os.chmod(self.getActualPath(path), mode)
 
 	def chown(self, path, user, group):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		os.chown(self.getActualPath(path), user, group)
 
 	def truncate(self, path, len):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		f = open(self.getActualPath(path), "a")
 		f.truncate(len)
 		f.close()
 
 	def mkdir(self, path, mode):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		dirs = [x for x in path.split(os.path.sep) if x != '']
-		self.tagdir.createDirs(dirs, mode=mode)
+		nf = TagFile(Dhtfs.MISSING_FILE, self.generateNewFileName())
+		self.tagdir.addDirsToFiles([nf], dirs, mode)
+
+		if path in self.fileCache:
+			self.logger.info("CACHE: Remove entry for path %s" % path)
+			del self.fileCache[path]
 
 	def utime(self, path, times):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		os.utime(self.getActualPath(path), times)
 
 	def access(self, path, mode):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		if not os.access(self.getActualPath(path), mode):
 			return -EACCES
 
 	def statfs(self):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 		"""
 		Should return an object with statvfs attributes (f_bsize, f_frsize...).
 		Eg., the return value of os.statvfs() is such a thing (since py 2.2).
@@ -291,23 +352,33 @@ class Dhtfs(Fuse):
 		return os.statvfs(self.root)
 
 	def unlink(self, path):
-		self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
+		self.logger.info("###### In function : %s" % sys._getframe().f_code.co_name)
 
 		# Get dirs in path
 		dirs = [x for x in os.path.dirname(path).split(os.path.sep) if x != '']
 
 		# create an instance of class TagFile
-		fi = TagFile(self.getActualPath(path), os.path.basename(path))
+		filename = os.path.basename(path)
+		fi = TagFile(self.tagdir.getActualLocation(dirs, filename), filename)
 
 		# Remove the directories asociated with the file
-		self.tagdir.delFilesFromDirs([fi], dirs)
-		self.logger.info("Deleted %s" % path)
+		if len( self.tagdir.getDirsForFiles([fi]) ) > 0:
+			self.logger.info("Calling delFiles with fileList = %s, dirlist = %s" % ([fi], dirs))
+			self.tagdir.delFiles([fi], dirs)
+			self.logger.info("Deleted %s" % path)
 
 		# If all directories asociated with the file are removed remove the file
 		if len( self.tagdir.getDirsForFiles([fi]) ) == 0:
+			actualPath = self.getActualPath(path)
 			self.logger.info("Deleting actual file since last reference is being deleted")	
+			self.logger.info("Calling delFiles with fileList = %s" % [fi])
 			self.tagdir.delFiles([fi])
-			os.unlink(fi.location)
+			self.logger.info("Deleting actual file %s" % actualPath)
+			os.unlink(actualPath)
+
+		# Clear cache
+		self.logger.info("CACHE: Clearing cache")
+		self.fileCache.clear()
 
 	def generateNewFileName(self):
 		number = self.__getNextSeqNumber()
@@ -332,11 +403,7 @@ class Dhtfs(Fuse):
 			def __init__(self, path, flags, *mode):
 				# set logger
 				self.logger = server.logger
-				self.logger.info("In function : %s" % sys._getframe().f_code.co_name)
-
-				if path == '/.mount.db':
-					self.file = SpoofFile()
-					return
+				self.logger.info("###### Initiating file object In function : %s" % sys._getframe().f_code.co_name)
 
 				# set the dirs which are associated with this file
 				self.dirs = [x for x in os.path.dirname(path).split(os.path.sep) if x != '']
@@ -347,10 +414,12 @@ class Dhtfs(Fuse):
 				newCreated = False
 				if os.path.basename(actualPath) == Dhtfs.MISSING_FILE:
 					# File is not yet created. Create file
-
 					self.logger.info("Actual path missing")
 					actualPath = server.generateNewFileName()
 					newCreated = True
+					if path in server.fileCache:
+						self.logger.info("CACHE: Remove entry for path %s" % path)
+						del server.fileCache[path]
 
 				self.file = os.fdopen(os.open(os.path.join(server.root, actualPath), flags, *mode),
 										flag2mode(flags))

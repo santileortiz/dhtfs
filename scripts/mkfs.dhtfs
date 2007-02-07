@@ -53,6 +53,7 @@ forceInit = options.forceInit
 
 try:
 	from dhtfs.Dhtfs import Dhtfs
+	from dhtfs.Tagging import Tagging
 	from dhtfs.TagHelper import TagFile
 except ImportError:
 	print >> sys.stderr, "%s: Error: Required modules or libraries not setup properly" % sys.argv[0]

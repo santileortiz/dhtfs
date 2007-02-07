@@ -86,7 +86,7 @@ class Tagging:
 		return 'Tagging API with %s' % str(self.tagDB)
 		
 	# Constructor
-	def __init__(self, db_path=os.getcwd(), db_file=DB_FILE):
+	def __init__(self, db_path=os.getcwd(), db_file=DB_FILE, logger=None):
 		"""
 		Tagging() -> object of class Tagging
 
@@ -104,6 +104,7 @@ class Tagging:
 
 		self.useWriteCache = False
 		self.tagDict = {}
+		self.logger = logger
 
 	##### Helper functions
 	
@@ -210,6 +211,7 @@ class Tagging:
 		@param tagList: List of tags to delete from elements. Defaults to an empty list. Empty list means all tags.
 		@type tagList: List
 		"""
+
 		err, tagDict = self.__getTagDictRW()
 		if err != 0:
 			return
@@ -510,7 +512,7 @@ class Tagging:
 
 		remainingElements = intersection_set
 
-		if getCover or beRestrictive:
+		if (getCover or beRestrictive) and len(remainingElements) > 20:
 			for tag in retTagList:
 				remainingElements.difference_update(tagDict['t2e'][tag])
 

@@ -43,7 +43,6 @@ class TagFile:
 
 		self.location = os.path.normpath(location)
 		self.name = name
-		self.__hash = 0
 		self.__hash = (self.location + self.name).__hash__() # Avoid recomputing
 
 	def __hash__(self):
@@ -51,7 +50,7 @@ class TagFile:
 
 	def __repr__(self):
 		if self.location:
-			return '<location=%s>' % (self.location)
+			return '<location=%s:name=%s>' % (self.location, self.name)
 
 	def __str__(self):
 		if self.location:
@@ -94,6 +93,23 @@ class TagDir(Tagging):
 			dirname = os.path.join(self.db_path, 't_' + dir)
 			if os.path.isdir(dirname):
 				os.rmdir(dirname)
+	
+	def __renameActualDir(self, dir1, dir2):
+		actualDirname1 = os.path.join(self.db_path, 't_' + dir1)
+		actualDirname2 = os.path.join(self.db_path, 't_' + dir2)
+		os.rename(actualDirname1, actualDirname2)
+	
+	def renameDir(self, dirs1, dirs2):
+		"""
+		Rename directories
+		"""
+		
+		fileList = Tagging.getElements(self, tagList=dirs1)
+		Tagging.delTagsFromElements(self, dirs1, elementList=fileList)
+		Tagging.addTags(self, elementList=fileList, newTagList=dirs2)
+
+		if [dirs1[-1] != dirs2[-1]]:
+			self.__renameActualDir(dirs1[-1], dirs2[-1])
 
 	def addDirsToFiles(self, fileList, dirList, mode=DEFAULT_DIR_MODE):
 		"""
@@ -148,7 +164,7 @@ class TagDir(Tagging):
 		self.__delActualDirs(dirs)
 		Tagging.delTagsFromElements(self, dirs, files)
 
-	def delFiles(self, files):
+	def delFiles(self, files, dirs=[]):
 		"""
 		Delete files
 
@@ -156,7 +172,7 @@ class TagDir(Tagging):
 		@type files: List of instances of L{TagFile}
 		"""
 
-		Tagging.delElementsFromTags(self, files)
+		Tagging.delElementsFromTags(self, files, tagList=dirs)
 		
 	def getAllDirs(self):
 		"""

@@ -32,20 +32,23 @@ from optparse import OptionParser
 
 fieldSeperator = ','
 
+# single letter options may be specified multiple times on the command line
+# handle such occurences gracefully
 def convertToList(option, opt_str, value, parser):
-	setattr(parser.values, option.dest, value.split(fieldSeperator))
+	# Get previously specified values
+	argList = getattr(parser.values, option.dest)
+	# append current values with the old ones
+	argList.extend(value.split(fieldSeperator))
+	setattr(parser.values, option.dest, argList)
 
 def parseCommandLine():
 
-	usage = """usage: %prog [options] [element [tag1 tag2 tag3 ...]]
+	usage = """usage: %prog -t tag1,tag2,tag3,...,  [element1 element2 element3 ...]
 		Add tags to the file.
-		In it's simplest form the command can be called with filename as its first 
-		argument and all arguments after that are considered as tags to be asociated with the file. 
-		To associated multiple tags to multiple files use the options below.
-		The files and tags can be specified either as arguments or parameters but not both at the same time.
+
+		Tags are specified by a comma seperated list or by multiple -t options.
 
 		A file needs to be in a mounted dhtfs filesystem for tagging.
-
 		If multiple files are specified all the files must be from the same filesystem.
 		"""
 
@@ -59,39 +62,15 @@ def parseCommandLine():
 				metavar="TAGLIST",
 				help="Comma seperated list of tags to associate with the given elements")
 				
-	parser.add_option(	"-e", "--element-list",
-				dest='elementList',
-				default=[],
-				action="callback",
-				callback=convertToList,
-				type="str",
-				metavar="ELEMENTLIST",
-				help="Comma seperated list of elements to which the tags will be attached")
-
 	(options, args) = parser.parse_args()
 	
 	# Check options
-	if (options.elementList == [] or options.tagList == []) and len(args) == 0:
-		parser.error("No input tags or elements found")
-
-	if (options.elementList != [] or options.tagList != []) and len(args) > 0:
-		 parser.error("Arguments and parameters used simultaneously")
-
-	if (options.elementList == [] and options.tagList == []) and len(args) < 2:
-		parser.error("Atleast two arguments expected. Only one found")
-
-	if (options.elementList != [] and options.tagList == []) or (options.elementList == [] and options.tagList != []):
-		parser.error("-e and -t options should be used simultaneously if used")
-
-	# At this point we are sure that the options are ok
+	if (options.tagList == []):
+		parser.error("Tag not specified")
 
 	# Get the list of tags and list of elements to be tagged
-	if len(args) > 1:
-		elementList = args[:1]
-		tagList = args[1:]
-	else:
-		elementList = options.elementList
-		tagList = options.tagList
+	elementList = args
+	tagList = options.tagList
 
 	return (elementList, tagList, parser)
 
@@ -126,7 +105,7 @@ def main():
 	try:
 		from dhtfs.Dhtfs import Dhtfs
 		from dhtfs.TagHelper import TagFile
-		import dhtfs.TagHelper
+		from dhtfs.TagHelper import TagDir
 
 	except ImportError:
 		print >> sys.stderr, "%s: Error: Required modules or libraries not setup properly" % sys.argv[0]
