@@ -3,12 +3,12 @@ on tags associated with files.
 
 This file contains the following topics:
 
-* Quick usage guide
-* Common problems and their solutions
-* Philosophy behind this project
-* Overall structure of the package
-* Documentation 
-* Licensing
+ * Quick usage guide
+ * Common problems and their solutions
+ * Philosophy behind this project
+ * Overall structure of the package
+ * Documentation 
+ * Licensing
 
 = Quick Usage Guide =
 
@@ -165,28 +165,28 @@ filesystem framework like VFS.
 
 The aims of this project are as follows:
 
-# Integrate tagging with traditional filesystem (VFS)
-# The directory hierarchies should be dynamically generated depending on the tags
+ # Integrate tagging with traditional filesystem (VFS)
+ # The directory hierarchies should be dynamically generated depending on the tags
    associated with the files
 
 = Overall Structure =
 
 The package 'dhtfs' consists of the following modules
 
-*GPStor* - Provides persistent storage of python datatypes
-*Tagging* - Provides primitive tagging operations
-*TagFile* - Used to represent a file for tagging
-*TagDir* - Extends Tagging and provides a wrapper over Tagging and implements filesystem specific operations
-*Dhtfs* - Extends Fuse and provides filesystem operations for dhtfs
+ * *GPStor* - Provides persistent storage of python datatypes
+ * *Tagging* - Provides primitive tagging operations
+ * *TagFile* - Used to represent a file for tagging
+ * *TagDir* - Extends Tagging and provides a wrapper over Tagging and implements filesystem specific operations
+ * *Dhtfs* - Extends Fuse and provides filesystem operations for dhtfs
 
 All the modules can be used individually and different systems could be developed using them.
 
 The following scripts are provided:
 
-* mount.dhtfs - Used for mounting a dhtfs file system
-* mkfs.dhtfs - Used for creating a dhtfs file system
-* addTags - Used for adding tags to files in a mounted dhtfs file system
-* deltags - Used for deleting tags from files in a mounted dhtfs file system
+ * mount.dhtfs - Used for mounting a dhtfs file system
+ * mkfs.dhtfs - Used for creating a dhtfs file system
+ * addTags - Used for adding tags to files in a mounted dhtfs file system
+ * deltags - Used for deleting tags from files in a mounted dhtfs file system
 
 = Documentation =
 
