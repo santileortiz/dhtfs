@@ -76,9 +76,9 @@ fusermount: failed to open /dev/fuse: No such file or directory
 == Solution ==
 
 Insert the fuse module by running the modprobe command as root or sudo
-
+{{{
 $ sudo modprobe fuse
-
+}}}
 == Problem ==
 
 Mount command fails with
@@ -115,23 +115,23 @@ Fuse adds its libraries to /usr/local/lib. Some systems may not use /usr/local/l
 as a standard path to search for libraries. You may have to add this path.
 
 Modify LD_LIBRARY_PATH to include the path to fuse libraries.
-
+{{{
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-
+}}}
 Changing LD_LIBRARY_PATH is not a recommended solution. A better approach is to
 edit the /etc/ld.so.conf and add /usr/local/lib to it. Run ldconfig to sync
 the changes. 
 
 Run the following commands as root
-
+{{{
 $ vi /etc/ld.so.conf
-
+}}}
 Add the line '/usr/local/lib'
 
 Save the file
-
+{{{
 $ ldconfig
-
+}}}
 = Philosophy behind this project =
 
 Most file systems organize files in a directory hierarchy. A file is stored
@@ -166,8 +166,7 @@ filesystem framework like VFS.
 The aims of this project are as follows:
 
  # Integrate tagging with traditional filesystem (VFS)
- # The directory hierarchies should be dynamically generated depending on the tags
-   associated with the files
+ # The directory hierarchies should be dynamically generated depending on the tags associated with the files
 
 = Overall Structure =
 
