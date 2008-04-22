@@ -67,7 +67,7 @@ Go ahead .. add more files and tag them and browse thro them ...
 
 = Common Problems and their solutions =
 
-== Problem ==
+== Problem 1 ==
 
 Command fails with
 
@@ -79,7 +79,8 @@ Insert the fuse module by running the modprobe command as root or sudo
 {{{
 $ sudo modprobe fuse
 }}}
-== Problem ==
+
+== Problem 2 ==
 
 Mount command fails with
 
@@ -96,11 +97,11 @@ $ sudo chown USERNAME /mnt/dhtfs
 
 OR run the mount comand as root.
 
-== Problem ==
+== Problem 3 ==
 
 Command fails with
 
-ImportError: /usr/lib/libfuse.so.2: version `FUSE_2.5' not found (required by /usr/lib/python2.4/site-packages/fuseparts/_fusemodule.so)
+{{{ ImportError: /usr/lib/libfuse.so.2: version `FUSE_2.5' not found }}} (required by /usr/lib/python2.4/site-packages/fuseparts/_fusemodule.so)
 
 OR
 
@@ -132,6 +133,7 @@ Save the file
 {{{
 $ ldconfig
 }}}
+
 = Philosophy behind this project =
 
 Most file systems organize files in a directory hierarchy. A file is stored
