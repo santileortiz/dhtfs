@@ -1,4 +1,5 @@
-﻿Tagging based filesystem, providing dynamic directory hierarchies based
+﻿#labels Phase-Deploy,Phase-Design
+Tagging based filesystem, providing dynamic directory hierarchies based
 on tags associated with files. 
 
 This file contains the following topics:
