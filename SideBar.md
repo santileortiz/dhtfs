@@ -1,0 +1,1 @@
+[Design discussion and User Guide](http://code.google.com/p/dhtfs/wiki/UserGuide?tm=6)
